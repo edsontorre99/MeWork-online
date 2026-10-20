@@ -2,9 +2,12 @@
   "name": "mework",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && prisma db push --skip-generate && next build",
     "start": "next start",
     "db:push": "prisma db push",
     "postinstall": "prisma generate"

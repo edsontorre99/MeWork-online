@@ -5,6 +5,9 @@ planificador semanal con IA, agentes de Gemini, estadísticas de Tayau, boletos 
 
 ## Arranque rápido
 
+Primero pon en `.env` la `DATABASE_URL` de una base MySQL (por ejemplo la de pruebas `mework_dev` de Hostinger,
+con **MySQL remoto** activado para tu IP). Luego:
+
 ```bash
 npm install
 npx prisma db push
@@ -21,7 +24,7 @@ Después ve a **Ajustes** y pega tu API Key de Gemini (https://aistudio.google.c
 
 | Variable | Uso |
 |---|---|
-| `DATABASE_URL` | SQLite local (`file:./dev.db`) o cadena de PostgreSQL |
+| `DATABASE_URL` | MySQL: `mysql://USUARIO:CONTRASEÑA@HOST:3306/NOMBRE_BASE` (símbolos de la contraseña codificados: `#` → `%23`, `@` → `%40`, `/` → `%2F`) |
 | `AUTH_USER`, `AUTH_PASSWORD` | Credenciales de acceso |
 | `JWT_SECRET` | Firma de la cookie de sesión (cámbialo en producción) |
 | `GEMINI_API_KEY` | Opcional; la llave guardada en Ajustes tiene prioridad |
@@ -38,9 +41,9 @@ Después ve a **Ajustes** y pega tu API Key de Gemini (https://aistudio.google.c
 - **Agentes de IA**: cada agente tiene su system prompt y su propia memoria (tabla `Message`). Valeria redacta
   correos como borrador editable y los envía desde tus cuentas de Gmail solo cuando tú los apruebas
   (ver “Conectar Gmail”).
-- **Tayau**: “Agregar métricas” → calendario del mes actual → semana de 7 días → subir Excel.
-  El lector (SheetJS) acepta 3 formatos: `Métrica | Valor`, una fila con encabezados, o una fila por encuesta con
-  columna “¿Cómo nos conociste?” (promedia calificaciones y cuenta canales). Hay plantilla descargable.
+- **Tayau**: “Agregar métricas” → calendario del mes actual → semana de 7 días → subir hasta 100 fotos de
+  encuestas. Gemini lee cada una, promedia comida, ambiente y servicio y cuenta cómo nos encontraron
+  (Facebook, Instagram, recomendación, TikTok/Maps u otros). Revisas el resumen y lo guardas.
 - **Boletos**: código único por boleto, QR descargable, cobro con OpenPay (cargo con redireccionamiento, requiere
   Merchant ID + llave privada en Ajustes) o marcado manual, y validador de entrada Permitido/Denegado
   (con cámara en navegadores que soportan `BarcodeDetector`).
@@ -99,7 +102,41 @@ respondan o llegue algo importante. No necesitas Google Cloud ni nada técnico: 
 - Para quitarle el acceso a MeWork: en Ajustes da clic en **Desconectar**, y si quieres, borra la contraseña
   “MeWork” en https://myaccount.google.com/apppasswords.
 
-## PostgreSQL en producción
+## Publicar en Hostinger
 
-En `prisma/schema.prisma` cambia `provider = "sqlite"` por `"postgresql"`, ajusta `DATABASE_URL`
-y ejecuta `npx prisma db push`.
+### 1. Crea la base de datos
+1. En hPanel entra a **Bases de datos → Administración de bases de datos MySQL**.
+2. Crea una base (por ejemplo `mework`) con su usuario y contraseña. Anótalos.
+3. Copia el **host** que aparece ahí (algo como `srv123.hstgr.io` o `localhost` si la app vive en el mismo servidor).
+4. Arma tu `DATABASE_URL`:
+   `mysql://USUARIO:CONTRASEÑA@HOST:3306/NOMBRE_BASE`
+   Si la contraseña tiene símbolos, cámbialos: `#` → `%23`, `@` → `%40`, `/` → `%2F`, `:` → `%3A`, `?` → `%3F`, `&` → `%26`, `%` → `%25`.
+
+Consejo: crea una segunda base `mework_dev` para trabajar desde tu computadora. En **MySQL remoto** agrega tu IP
+para que te deje conectar.
+
+### 2. Crea la app Node.js
+1. En hPanel: **Sitios web → Agregar sitio web → Node.js Web App** y conéctala con tu repositorio de GitHub.
+2. Versión de Node: **20 o 22**.
+3. Comando de build: `npm run build`
+4. Comando de inicio: `npm start`
+
+### 3. Variables de entorno
+Agrégalas en la configuración de la app (no subas tu `.env` a GitHub):
+
+| Variable | Qué poner |
+|---|---|
+| `DATABASE_URL` | La cadena MySQL del paso 1 |
+| `AUTH_USER` | Tu usuario para entrar a MeWork |
+| `AUTH_PASSWORD` | Tu contraseña para entrar a MeWork |
+| `JWT_SECRET` | Un texto largo y aleatorio |
+| `GEMINI_API_KEY` | Tu API Key de Gemini (opcional si la guardas en Ajustes) |
+| `MAIL_ENCRYPTION_KEY` | Solo si conectas Gmail; la misma de siempre |
+| `CRON_SECRET` | Solo si programas la revisión de correo |
+
+### 4. Despliega
+Cada vez que publiques, `npm run build` crea o actualiza las tablas solo (`prisma db push`) y luego compila la app.
+La primera vez que entres se cargan los datos de ejemplo.
+
+Si el build se detiene con un aviso de que se perderían datos (por ejemplo, al quitar una columna), no se borró
+nada: revisa el cambio antes de continuar.

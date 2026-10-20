@@ -1,23 +1,23 @@
-// Para producción con PostgreSQL cambia provider = "postgresql"
-// y DATABASE_URL a tu cadena de conexión.
+// Base de datos MySQL (Hostinger). DATABASE_URL = mysql://USUARIO:CONTRASEÑA@HOST:3306/NOMBRE_BASE
+// En MySQL un String es VARCHAR(191); los campos que pueden ser más largos usan @db.Text o @db.MediumText.
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model Setting {
   key   String @id
-  value String
+  value String @db.Text
 }
 
 model Tool {
   id     String @id @default(cuid())
   name   String
-  url    String
+  url    String @db.Text
   icon   String
   // "link" abre URL en pestaña nueva, "google" abre el buscador, "internal" navega dentro de la app
   kind   String @default("link")
@@ -34,7 +34,7 @@ model Project {
 
 model Task {
   id        String   @id @default(cuid())
-  title     String
+  title     String   @db.Text
   day       String // YYYY-MM-DD
   order     Int      @default(0)
   priority  Boolean  @default(false)
@@ -48,11 +48,11 @@ model Agent {
   id           String    @id @default(cuid())
   firstName    String
   lastName     String
-  avatar       String? // URL o data URL
+  avatar       String?   @db.MediumText // URL o data URL
   role         String
   age          Int
-  systemPrompt String
-  status       String    @default("Listo para ayudarte")
+  systemPrompt String    @db.Text
+  status       String    @default("Listo para ayudarte") @db.Text
   color        String    @default("#0f766e")
   // Modelo ligero para "Consulta" y modelo fuerte para "Tareas" (null = modelo global de Ajustes)
   consultModel String?
@@ -66,7 +66,7 @@ model Message {
   agentId   String
   agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
   role      String // "user" | "model"
-  content   String
+  content   String   @db.MediumText
   mode      String? // "consulta" | "tareas"
   model     String? // modelo de Gemini que generó la respuesta
   createdAt DateTime @default(now())
@@ -90,8 +90,8 @@ model TayauWeek {
 
 model TikTokIdea {
   id          String   @id @default(cuid())
-  title       String
-  description String
+  title       String   @db.Text
+  description String   @db.Text
   project     String
   // guion | edicion | programado | publicado
   status      String   @default("guion")
@@ -108,7 +108,7 @@ model Ticket {
   // PENDIENTE | PAGADO | USADO | CANCELADO
   status      String    @default("PENDIENTE")
   chargeId    String?
-  checkoutUrl String?
+  checkoutUrl String?   @db.Text
   createdAt   DateTime  @default(now())
   usedAt      DateTime?
 }
@@ -124,7 +124,7 @@ model MailAccount {
   lastCheckedAt DateTime?
   lastUid       Int?
   uidValidity   String?
-  lastError     String?
+  lastError     String?     @db.Text
   createdAt     DateTime    @default(now())
   sent          SentMail[]
   alerts        MailAlert[]
@@ -135,10 +135,10 @@ model SentMail {
   id        String      @id @default(cuid())
   accountId String
   account   MailAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  to        String
-  subject   String
-  body      String
-  messageId String      @unique
+  to        String      @db.Text
+  subject   String      @db.Text
+  body      String      @db.MediumText
+  messageId String      @unique @db.VarChar(255)
   sentAt    DateTime    @default(now())
 }
 
@@ -149,9 +149,9 @@ model MailAlert {
   kind       String // "respuesta" | "importante"
   fromName   String
   fromEmail  String
-  subject    String
-  summary    String
-  messageId  String
+  subject    String      @db.Text
+  summary    String      @db.Text
+  messageId  String      @db.VarChar(255)
   receivedAt DateTime
   read       Boolean     @default(false)
   createdAt  DateTime    @default(now())
