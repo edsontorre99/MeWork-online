@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme {
+  /* Estilo Apple: San Francisco en Mac/iPhone, Inter como respaldo */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), "Segoe UI", system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-inter), "Segoe UI", system-ui, sans-serif;
+  --font-wordmark: var(--font-inter-tight), "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  /* "brand" = grafito; el 500/600 es el azul de sistema para foco y estados activos */
+  --color-brand-50: #f5f5f7;
+  --color-brand-100: #ebebef;
+  --color-brand-200: #d2d2d7;
+  --color-brand-500: #0071e3;
+  --color-brand-600: #0071e3;
+  --color-brand-700: #1d1d1f;
+  --color-brand-800: #000000;
+  --color-brand-900: #1d1d1f;
+  --color-brand-950: #1d1d1f;
+
+  /* Grises neutros (fríos) en lugar de los cálidos de Tailwind */
+  --color-stone-50: #f9f9fb;
+  --color-stone-100: #f2f2f5;
+  --color-stone-200: #e5e5ea;
+  --color-stone-300: #d2d2d7;
+  --color-stone-400: #a1a1a6;
+  --color-stone-500: #86868b;
+  --color-stone-600: #6e6e73;
+  --color-stone-700: #48484a;
+  --color-stone-800: #2c2c2e;
+  --color-stone-900: #1d1d1f;
+
+  --color-sand-50: #fbfbfd;
+  --color-sand-100: #f5f5f7;
+  --color-sand-200: #e8e8ed;
+}
+
+body {
+  background: var(--color-sand-50);
+  color: #1d1d1f;
+  letter-spacing: -0.011em;
+}
+
+.font-display {
+  letter-spacing: -0.022em;
+}
+
+@utility card {
+  @apply rounded-[20px] border border-black/[0.06] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)];
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40;
+}
+@utility btn-primary {
+  @apply btn bg-[#1d1d1f] text-white hover:bg-black;
+}
+@utility btn-ghost {
+  @apply btn text-stone-700 hover:bg-stone-100;
+}
+@utility btn-outline {
+  @apply btn border border-stone-300 bg-white text-stone-800 hover:bg-stone-50;
+}
+
+@utility input {
+  @apply w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-stone-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20;
+}
+@utility label {
+  @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-stone-500;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+}

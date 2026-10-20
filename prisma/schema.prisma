@@ -1,0 +1,160 @@
+// Para producción con PostgreSQL cambia provider = "postgresql"
+// y DATABASE_URL a tu cadena de conexión.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model Tool {
+  id     String @id @default(cuid())
+  name   String
+  url    String
+  icon   String
+  // "link" abre URL en pestaña nueva, "google" abre el buscador, "internal" navega dentro de la app
+  kind   String @default("link")
+  order  Int
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  name      String
+  color     String
+  createdAt DateTime @default(now())
+  tasks     Task[]
+}
+
+model Task {
+  id        String   @id @default(cuid())
+  title     String
+  day       String // YYYY-MM-DD
+  order     Int      @default(0)
+  priority  Boolean  @default(false)
+  done      Boolean  @default(false)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+}
+
+model Agent {
+  id           String    @id @default(cuid())
+  firstName    String
+  lastName     String
+  avatar       String? // URL o data URL
+  role         String
+  age          Int
+  systemPrompt String
+  status       String    @default("Listo para ayudarte")
+  color        String    @default("#0f766e")
+  // Modelo ligero para "Consulta" y modelo fuerte para "Tareas" (null = modelo global de Ajustes)
+  consultModel String?
+  taskModel    String?
+  createdAt    DateTime  @default(now())
+  messages     Message[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  role      String // "user" | "model"
+  content   String
+  mode      String? // "consulta" | "tareas"
+  model     String? // modelo de Gemini que generó la respuesta
+  createdAt DateTime @default(now())
+}
+
+model TayauWeek {
+  id            String   @id @default(cuid())
+  startDate     String   @unique // YYYY-MM-DD
+  endDate       String
+  sabor         Float
+  ambiente      Float
+  servicio      Float
+  facebook      Int
+  instagram     Int
+  recomendacion Int
+  tiktokMaps    Int
+  otros         Int      @default(0)
+  responses     Int      @default(0)
+  createdAt     DateTime @default(now())
+}
+
+model TikTokIdea {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  project     String
+  // guion | edicion | programado | publicado
+  status      String   @default("guion")
+  createdAt   DateTime @default(now())
+}
+
+model Ticket {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  buyerName   String
+  buyerEmail  String
+  eventName   String
+  price       Float
+  // PENDIENTE | PAGADO | USADO | CANCELADO
+  status      String    @default("PENDIENTE")
+  chargeId    String?
+  checkoutUrl String?
+  createdAt   DateTime  @default(now())
+  usedAt      DateTime?
+}
+
+// Cuentas de Gmail conectadas con contraseña de aplicación (IMAP + SMTP)
+model MailAccount {
+  id            String      @id @default(cuid())
+  label         String
+  email         String      @unique
+  passwordEnc   String // AES-256-GCM con MAIL_ENCRYPTION_KEY; nunca sale al navegador
+  isDefault     Boolean     @default(false)
+  enabled       Boolean     @default(true)
+  lastCheckedAt DateTime?
+  lastUid       Int?
+  uidValidity   String?
+  lastError     String?
+  createdAt     DateTime    @default(now())
+  sent          SentMail[]
+  alerts        MailAlert[]
+}
+
+// Correos enviados desde MeWork (sirven para detectar respuestas)
+model SentMail {
+  id        String      @id @default(cuid())
+  accountId String
+  account   MailAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  to        String
+  subject   String
+  body      String
+  messageId String      @unique
+  sentAt    DateTime    @default(now())
+}
+
+model MailAlert {
+  id         String      @id @default(cuid())
+  accountId  String
+  account    MailAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  kind       String // "respuesta" | "importante"
+  fromName   String
+  fromEmail  String
+  subject    String
+  summary    String
+  messageId  String
+  receivedAt DateTime
+  read       Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+
+  @@unique([accountId, messageId])
+}
